@@ -7,7 +7,6 @@ const jwt = require('jsonwebtoken');
 
 // isAuthenticated
 router.get('/isAuthenticated', verifyToken, async (req, res) => {
-  console.log('hapen');
   // res.status(200).json({
   //   success: true,
   //   customerId: req.customerId,

@@ -2,10 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const router = express.Router();
 const Account = require('../models/account');
-const Expense = require('../models/expense');
+const ExpenseGrouping = require('../models/expenseGrouping');
 const ExpenseItem = require('../models/expenseItem');
 const Payment = require('../models/payment');
 const mongoose = require('mongoose');
+const mongo = require('mongodb');
 
 // Getting all 
 router.get('/', async (req, res) => {
@@ -89,37 +90,33 @@ router.post(
   getAccount,
   saveExpenseItems,
   async (req, res) => {
-  try {
-    const { addExpenseDetails } = req.body;
-    const expense = new Expense({
-      accountId: req.account._id,
-      name: addExpenseDetails.name,
-      date: Date.now(),
-      items: req.savedExpenseItemsIds
-    });
-    const newExpense = await expense.save();
-    res.status(201).json({
-      "status": "success",
-      newExpense
-    });
-    
-  } catch (err) {
-    res.status(400).json({
-      message: err.message
-    });
-  }
+    try {
+      const expenseItem = new ExpenseItem({
+        ...req.expenseItemToSave
+      });
+      const newExpenseItem = await expenseItem.save();
+      res.status(201).json({
+        "status": "success",
+        newExpenseItem
+      });
+      
+    } catch (err) {
+      res.status(400).json({
+        message: err.message
+      });
+    }
 })
 
 router.post(
-  '/:id/makePayment',
+  '/makePayment',
   makePaymentValidations,
   getAccount,
   async (req, res) => {
   try {
-    const { remarks, paidByMemberId, paidToMemberId, amount } = req.body;
+    const { accountId, remarks, paidByMemberId, paidToMemberId, amount, createdAt } = req.body;
     const payment = new Payment({
-      accountId: req.account._id,
-      date: Date.now(),
+      accountId,
+      createdAt,
       paidByMemberId,
       paidToMemberId,
       remarks,
@@ -151,19 +148,19 @@ router.delete('/:id', getAccount, async (req, res) => {
   }
 });
 async function addExpenseValidations(req, res, next) {
-  const { addExpenseDetails, loanSharkMemberId } = req.body;
-  if (!loanSharkMemberId) {
+  const { cashOutByMemberId } = req.body;
+  if (!cashOutByMemberId) {
     return res.status(404).json({
       success: false,
       message: 'Loan shark member id should have a value'
     })
   }
-  if (!addExpenseDetails || addExpenseDetails.length <=0) {
-    return res.status(404).json({
-      success: false,
-      message: 'Expense Details should be populated'
-    })
-  }
+  // if (!addExpenseDetails || addExpenseDetails.length <=0) {
+  //   return res.status(404).json({
+  //     success: false,
+  //     message: 'Expense Details should be populated'
+  //   })
+  // }
   next()
 }
 async function makePaymentValidations(req, res, next) {
@@ -218,10 +215,8 @@ async function getAccountExpenses(req, res, next) {
     })
   }
   let expenses = [];
-  console.log('Henlo');
-  console.log();
   try {
-    expenses = await Expense.find({ accountId: req.account._id }).populate('items');
+    expenses = await ExpenseItem.find({ accountId: req.account._id });
     if (expenses.length === 0) {
       return res.status(404).json({
         success: false,
@@ -248,12 +243,12 @@ async function getAccountPayments(req, res, next) {
   let payments = [];
   try {
     payments = await Payment.find({ accountId: req.account._id });
-    if (payments.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No payments found for the given account'
-      });
-    }
+    // if (payments.length === 0) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'No payments found for the given account'
+    //   });
+    // }
   } catch (err) {
     return res.status(500).json({
       success: false,
@@ -265,35 +260,25 @@ async function getAccountPayments(req, res, next) {
 }
 
 async function saveExpenseItems(req, res, next) {
-  const { addExpenseDetails, loanSharkMemberId } = req.body;
-  const totalAmount = addExpenseDetails.amount;
-  if (!totalAmount || totalAmount <= 0.0) {
+  const { accountId, name, cashOutByMemberId, forMemberId, amount, remarks, createdAt } = req.body;
+  if (!amount || amount <= 0.0) {
     return res.status(200).json({
       success: true,
       message: 'Invalid Amount: Amount should be greater than 0'
     })
   }
-  const memberIds = addExpenseDetails.selectedMemberIds;
-  if (!memberIds || memberIds?.length < 1) {
-    return res.status(200).json({
-      success: true,
-      message: 'Members should be greater than 0'
-    })
-  }
-  const expenseItemsToSave = [];
-  for (const memberId of memberIds) {
-    expenseItemsToSave.push({
-      cashOutByMemberId: loanSharkMemberId,
-      forMemberId: memberId,
-      amount: totalAmount / memberIds.length,
-      remarks: ""
-    });
-  }
-  const savedExpenseItems = await ExpenseItem.insertMany(expenseItemsToSave);
-  const savedExpenseItemsIds = savedExpenseItems.map(expenseItem => {
-    return expenseItem._id;
-  });
-  req.savedExpenseItemsIds = savedExpenseItemsIds;
+  const expenseItemToSave = {
+    accountId,
+    name,
+    cashOutByMemberId,
+    forMemberId,
+    amount: mongoose.Types.Decimal128.fromString(
+      Number(amount).toFixed(2)
+    ),
+    remarks,
+    createdAt
+  };
+  req.expenseItemToSave = expenseItemToSave;
   next()
 }
 

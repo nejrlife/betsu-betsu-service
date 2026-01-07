@@ -8,8 +8,9 @@ const paymentSchema = new mongoose.Schema(
       required: true
     },
     amount: {
-      type: Number,
-      required: true
+      type: mongoose.Schema.Types.Decimal128,
+      required: true,
+      get: v => (v ? parseFloat(v.toString()) : null),
     },
     paidByMemberId: {
       type: String,
@@ -19,7 +20,7 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    date: {
+    createdAt: {
       type: Date,
       required: true
     },
@@ -30,5 +31,9 @@ const paymentSchema = new mongoose.Schema(
     },
   }
 );
+
+
+paymentSchema.set('toJSON', { getters: true });
+paymentSchema.set('toObject', { getters: true });
 
 module.exports = mongoose.model('Payment', paymentSchema);

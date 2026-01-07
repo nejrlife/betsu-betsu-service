@@ -67,7 +67,6 @@ router.post('/register', getMember, async (req, res) => {
 
 // User login
 router.post('/login', async (req, res) => {
-  console.log('emmy');
   try {
     const { clientId, loginUser } = req.body;
     
@@ -94,9 +93,7 @@ router.post('/login', async (req, res) => {
         message: 'Empty user password not allowed'
       });
     }
-    console.log('emmy');
     const foundLoginUser = await LoginUser.findOne({ username: loginUser.username });
-    console.log(foundLoginUser);
     if (!foundLoginUser) {
       return res.status(200).json({
         success: true,
