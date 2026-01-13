@@ -15,17 +15,12 @@ const accountSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Member'
       }],
-      required: true,
-      validate: {
-        validator: function (v) {
-          return v.length > 0;
-        }
-      }
-    }
-    // createdOn: {
-    //   type: Date,
-    //   required: true
-    // },
+      default: []
+    },
+    createdAt: {
+      type: Date,
+      required: true
+    },
     // createdBy: {
     //   type: String,
     //   required: true

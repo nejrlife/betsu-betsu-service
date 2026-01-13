@@ -15,7 +15,6 @@ function verifyToken(req, res, next) {
         message: 'Invalid token or token has expired'
       });
     }
-    req.customerId = decoded.customerId;
     req.memberId = decoded.memberId;
     next();
   });

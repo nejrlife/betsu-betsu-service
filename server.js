@@ -25,18 +25,10 @@ app.get('/', (req, res) => {
   res.render('index', { text: 'World' });
 });
 
-// const userRouter = require('./routes/users');
-// const customersRouter = require('./routes/customers');
-
-// app.use('/customers', customersRouter);
-// app.use('/users', userRouter);
-
 const memberRouter = require('./routes/members');
 const loginUsersRouter = require('./routes/loginUsers');
 const accountsRouter = require('./routes/accounts');
-const customersRouter = require('./routes/customers');
 
-app.use('/customers', customersRouter);
 app.use('/members', memberRouter);
 app.use('/loginUsers', loginUsersRouter);
 app.use('/accounts', accountsRouter);

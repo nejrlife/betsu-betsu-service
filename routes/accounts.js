@@ -62,19 +62,22 @@ router.get('/expandAccountDetails/:id',
 });
 
 router.post('/create', async (req, res) => {
-  const { accountName, contributingMemberIds } = req.body;
+  const { accountName, createdAt, contributingMemberIds } = req.body;
+  let dummyContributingMemberIds = [];
   if (!contributingMemberIds || contributingMemberIds.length <= 0) {
-    return res.status(404).json({ success: false, message: 'Contributing Members should be more than 0' });
+    // return res.status(404).json({ success: false, message: 'Contributing Members should be more than 0' });
+    dummyContributingMemberIds = ['66be1ecbcca569893604bcb4', '66be1ec7cca569893604bcb2', '66be1ec4cca569893604bcb0'];
   }
   const account = new Account({
     name: accountName,
     isAccountOpen: true,
-    contributingMemberIds
+    createdAt,
+    contributingMemberIds: contributingMemberIds ?? dummyContributingMemberIds
   });
   try {
     const newAccount = await account.save();
     res.status(201).json({
-      success: true,
+      "status": "success",
       newAccount
     });
   } catch (err) {
@@ -217,12 +220,12 @@ async function getAccountExpenses(req, res, next) {
   let expenses = [];
   try {
     expenses = await ExpenseItem.find({ accountId: req.account._id });
-    if (expenses.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No expenses found for the given account'
-      });
-    }
+    // if (expenses.length === 0) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'No expenses found for the given account'
+    //   });
+    // }
   } catch (err) {
     return res.status(500).json({
       success: false,
