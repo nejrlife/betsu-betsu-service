@@ -7,6 +7,7 @@ const ExpenseItem = require('../models/expenseItem');
 const Payment = require('../models/payment');
 const mongoose = require('mongoose');
 const mongo = require('mongodb');
+const { maskString } = require('../utils/stringUtils');
 
 // Getting all 
 router.get('/', async (req, res) => {
@@ -194,6 +195,9 @@ async function getAccount(req, res, next) {
   let account = undefined;
   try {
     account = await Account.findOne({ _id: accountId });
+    if (account) {
+      account.name = maskString(account.name);
+    }
 
     if (account == null) {
       return res.status(404).json({
@@ -220,6 +224,14 @@ async function getAccountExpenses(req, res, next) {
   let expenses = [];
   try {
     expenses = await ExpenseItem.find({ accountId: req.account._id });
+    expenses = expenses.map((expense) => {
+      const expenseObj = typeof expense.toObject === 'function' ? expense.toObject() : expense;
+      return {
+        ...expenseObj,
+        name: maskString(expenseObj.name),
+        remarks: maskString(expenseObj.remarks)
+      };
+    });
     // if (expenses.length === 0) {
     //   return res.status(404).json({
     //     success: false,
