@@ -34,10 +34,17 @@ router.get('/getAccountsByMember/:id', async (req, res) => {
     const accounts = await Account.find({
       contributingMemberIds: memberId
     });
+    const maskedAccounts = accounts.map((account) => {
+      const accountObj = typeof account.toObject === 'function' ? account.toObject() : account;
+      return {
+        ...accountObj,
+        name: maskString(accountObj.name, 1)
+      };
+    });
     if (!accounts) {
       return res.status(404).json({ success: false, message: 'Account not found for the given memberId' });
     }
-    res.json(accounts);
+    res.json(maskedAccounts);
   } catch (err) {
     res.status(500).json({
       message: err.message
@@ -196,7 +203,7 @@ async function getAccount(req, res, next) {
   try {
     account = await Account.findOne({ _id: accountId });
     if (account) {
-      account.name = maskString(account.name);
+      account.name = maskString(account.name, 1);
     }
 
     if (account == null) {
