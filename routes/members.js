@@ -3,6 +3,7 @@ const cors = require('cors');
 const router = express.Router();
 const Member = require('../models/member');
 const dummyFunction = require('../utils/dummyUtils');
+const { maskString } = require('../utils/stringUtils');
 
 // Getting by Id 
 router.get('/:id', dummyFunction, getMember, async (req, res) => {
@@ -16,8 +17,15 @@ router.get('/:id', dummyFunction, getMember, async (req, res) => {
 router.get('/', dummyFunction, async (req, res) => {
   try {
     const member = await Member.find();
+    const maskedMembers = member.map((item) => {
+      const memberObj = typeof item.toObject === 'function' ? item.toObject() : item;
+      return {
+        ...memberObj,
+        name: maskString(memberObj.name)
+      };
+    });
     // setTimeout(() => {
-    res.json(member);
+    res.json(maskedMembers);
     // }, 3000);
   } catch (err) {
     res.status(500).json({
